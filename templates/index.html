@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maharashtra Weather Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            background-color: #f0f2f5;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 1200px;
+        }
+        #weatherPlot {
+            max-width: 100%;
+            height: auto;
+            margin-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        .district-select {
+            margin: 20px 0;
+        }
+        .current-weather {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .current-weather h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .weather-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #0066cc;
+        }
+        .error-message {
+            color: #dc3545;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">Maharashtra Weather Dashboard</h1>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div class="district-select">
+                    <label for="districtSelect" class="form-label">Select District:</label>
+                    <select class="form-select" id="districtSelect" onchange="updateWeather()">
+                        {% for district in districts %}
+                        <option value="{{ district }}">{{ district }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="current-weather">
+                    <h3>Current Weather</h3>
+                    <div class="row">
+                        <div class="col-6">
+                            <p>Temperature</p>
+                            <p class="weather-value" id="currentTemp">--</p>
+                        </div>
+                        <div class="col-6">
+                            <p>Humidity</p>
+                            <p class="weather-value" id="currentHumidity">--</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-8">
+                <div id="error-message" class="error-message"></div>
+                <div class="text-center">
+                    <img id="weatherPlot" src="" alt="Weather Plot" style="display: none;">
+                    <div id="loading" class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateWeather() {
+            const district = document.getElementById('districtSelect').value;
+            const plotImg = document.getElementById('weatherPlot');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('error-message');
+            
+            plotImg.style.display = 'none';
+            loading.style.display = 'inline-block';
+            errorMessage.style.display = 'none';
+
+            fetch(`/get_weather?city=${district}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        plotImg.src = `data:image/png;base64,${data.plot}`;
+                        plotImg.style.display = 'block';
+                        document.getElementById('currentTemp').textContent = data.current.temperature;
+                        document.getElementById('currentHumidity').textContent = data.current.humidity;
+                    } else {
+                        errorMessage.textContent = data.error;
+                        errorMessage.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    errorMessage.textContent = 'Error fetching weather data. Please try again.';
+                    errorMessage.style.display = 'block';
+                })
+                .finally(() => {
+                    loading.style.display = 'none';
+                });
+        }
+
+        // Load initial weather data
+        window.onload = updateWeather;
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
